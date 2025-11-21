@@ -12,6 +12,10 @@ from beatoven.core.event_horizon import EventHorizonDetector
 from beatoven.core.psyfi import PsyFiIntegration
 from beatoven.core.echotome import EchotomeHooks
 from beatoven.core.runic_export import RunicVisualExporter
+from beatoven.core.inference import (
+    UnifiedInference, SeedLineage, ComputeLedger,
+    InferenceBackend, get_inference
+)
 
 __all__ = [
     "PatchBay",
@@ -26,4 +30,9 @@ __all__ = [
     "PsyFiIntegration",
     "EchotomeHooks",
     "RunicVisualExporter",
+    "UnifiedInference",
+    "SeedLineage",
+    "ComputeLedger",
+    "InferenceBackend",
+    "get_inference",
 ]

@@ -116,7 +116,7 @@ class SymbolicTranslator:
     def _init_projection_matrices(self):
         """Initialize deterministic projection matrices."""
         # Use fixed seed for deterministic projections
-        rng = np.random.default_rng(0xABXC0RE)
+        rng = np.random.default_rng(0xABC012E)
 
         # Input dimensions: intent(128) + mood(32) + rune(64) + style(18) = 242
         input_dim = 242

@@ -14,6 +14,7 @@ import ModuleScreen from '../screens/ModuleScreen';
 import StemsScreen from '../screens/StemsScreen';
 import SymbolicPanelScreen from '../screens/SymbolicPanelScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ConnectionStatus from '../components/ConnectionStatus';
 import { colors } from '../theme';
 
 export type RootStackParamList = {
@@ -69,7 +70,10 @@ function TabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'BeatOven' }}
+        options={{
+          title: 'BeatOven',
+          headerRight: () => <ConnectionStatus />,
+        }}
       />
       <Tab.Screen
         name="Patchbay"

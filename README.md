@@ -12,6 +12,7 @@ A Eurorack-inspired generative music system built on ABX-Core v1.2 and enforced 
 - **SEED Protocol**: Complete provenance tracking and reproducibility
 - **GPU Acceleration**: CUDA and Apple Silicon (MPS) support
 - **API-First**: FastAPI backend with comprehensive endpoints
+- **Mobile UI**: React Native (Expo, TypeScript) app for iOS and Android
 - **AAL Interoperability**: Clean hooks for PsyFi, Phonomicon, Echotome, and more
 
 ## Quick Start
@@ -41,6 +42,24 @@ pip install -e ".[all]"
 ```
 
 The API will be available at `http://localhost:8000`. Documentation at `/docs`.
+
+### Run the Mobile App
+
+```bash
+cd beatoven-ui
+
+# Install dependencies
+npm install
+
+# Start Expo development server
+npx expo start
+
+# Run on iOS simulator
+npx expo start --ios
+
+# Run on Android emulator
+npx expo start --android
+```
 
 ### Basic Usage
 
@@ -121,6 +140,33 @@ print(f"Provenance: {fields.provenance_hash}")
 │         ↓               ↓               ↓                   │
 │   Event Horizon   Echotome Hooks   Runic Export             │
 └─────────────────────────────────────────────────────────────┘
+```
+
+## Mobile App (beatoven-ui)
+
+The React Native app provides the primary user interface:
+
+| Screen | Description |
+|--------|-------------|
+| **Home** | Quick generate, recent renders, presets |
+| **PatchBay** | Visual node graph of module signal flow |
+| **Module** | Configure rhythm, harmony, timbre, motion parameters |
+| **Stems** | Waveform previews, playback, download |
+| **Symbolic** | Live ABX-Runes field visualization |
+| **Settings** | Backend URL, device mode, theme |
+
+### Design Language
+
+- Dark UI with high contrast
+- Geometric blocks
+- Single accent color (#00D9FF)
+- No skeuomorphic elements
+
+### Running Tests
+
+```bash
+cd beatoven-ui
+npm test
 ```
 
 ## Core Modules
@@ -240,8 +286,10 @@ pytest --cov=beatoven beatoven/tests/
 - [Architecture](beatoven/docs/architecture.md)
 - [Modules](beatoven/docs/modules.md)
 - [Runic System](beatoven/docs/runic_system.md)
+- [Symbolic Mapping](beatoven/docs/symbolic_mapping.md)
 - [Provenance](beatoven/docs/provenance.md)
 - [GPU Support](beatoven/docs/gpu.md)
+- [Mobile Integration](beatoven/docs/mobile.md)
 
 ## License
 

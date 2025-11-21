@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "BeatOven",
+    "slug": "beatoven-ui",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D0D0D"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "io.appliedalchemy.beatoven"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0D0D0D"
+      },
+      "package": "io.appliedalchemy.beatoven"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}

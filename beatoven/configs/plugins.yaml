@@ -1,0 +1,70 @@
+# BeatOven Plugin Registry
+# Modular extension configuration
+
+version: "1.0"
+name: "BeatOven Plugin Configuration"
+
+# Plugin discovery
+discovery:
+  enabled: true
+  paths:
+    - "./plugins"
+    - "~/.beatoven/plugins"
+  auto_load: false
+
+# Core modules (always loaded)
+core_modules:
+  - input
+  - translator
+  - rhythm
+  - harmony
+  - timbre
+  - motion
+  - stems
+  - event_horizon
+  - patchbay
+  - runic_export
+
+# AAL Integration modules
+aal_integrations:
+  psyfi:
+    enabled: true
+    version: "1.0"
+    description: "PsyFi emotional modulation integration"
+
+  echotome:
+    enabled: true
+    version: "1.0"
+    description: "Echotome steganographic hooks"
+
+  phonomicon:
+    enabled: true
+    version: "1.0"
+    description: "Phonomicon NFT rarity metadata export"
+
+  dream_engine:
+    enabled: false
+    version: "1.0"
+    description: "Somnus-1 Dream Engine hooks"
+
+  neon_genie:
+    enabled: false
+    version: "1.0"
+    description: "Neon Genie visual generation hooks"
+
+# Extension points
+extensions:
+  oscillators: []
+  filters: []
+  effects: []
+  analyzers: []
+  exporters: []
+
+# Plugin security
+security:
+  sandbox_enabled: true
+  allowed_imports:
+    - numpy
+    - scipy
+  max_memory_mb: 256
+  max_cpu_percent: 50

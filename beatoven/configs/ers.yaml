@@ -1,0 +1,52 @@
+# ERS Runtime Configuration
+# Energy-Resonance Scheduler for RAM-resident hot paths
+
+version: "1.0"
+name: "BeatOven ERS Runtime Configuration"
+
+# Runtime mode
+runtime:
+  mode: "realtime"  # realtime, batch, hybrid
+  ram_resident: true
+  hot_path_optimization: true
+
+# Memory management
+memory:
+  max_buffer_size_mb: 512
+  preload_modules: true
+  cache_enabled: true
+  cache_size_mb: 256
+
+# Scheduling
+scheduler:
+  type: "energy_resonance"
+  priority_levels: 4
+  preemption: false
+  time_slice_ms: 10
+
+# Hot paths (frequently used execution paths)
+hot_paths:
+  - name: "rhythm_generation"
+    priority: 1
+    cache: true
+  - name: "harmonic_generation"
+    priority: 1
+    cache: true
+  - name: "timbre_synthesis"
+    priority: 2
+    cache: true
+  - name: "stem_bounce"
+    priority: 3
+    cache: false
+
+# Energy optimization
+energy:
+  adaptive_scaling: true
+  idle_threshold_ms: 100
+  power_save_mode: false
+
+# Resonance tuning (module interaction optimization)
+resonance:
+  cross_module_sync: true
+  phase_alignment: true
+  harmonic_coupling: 0.5

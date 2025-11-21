@@ -7,12 +7,15 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Navigation from './navigation';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Navigation />
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Navigation />
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

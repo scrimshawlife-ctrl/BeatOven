@@ -1,8 +1,8 @@
 /**
- * Stems Screen - Waveform previews and download
+ * Stems Screen - Waveform previews and download with audio playback
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { Audio } from 'expo-av';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import StemCard from '../components/StemCard';
+import { useBackend } from '../hooks/useBackend';
 import type { RootStackParamList } from '../navigation';
 
 type StemsScreenRouteProp = RouteProp<RootStackParamList, 'Stems'>;
@@ -42,6 +45,19 @@ const generateWaveform = (seed: number): number[] => {
 export default function StemsScreen() {
   const route = useRoute<StemsScreenRouteProp>();
   const { jobId } = route.params;
+  const { getStemUrl } = useBackend();
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   const [stems, setStems] = useState<StemData[]>([
     {
@@ -90,13 +106,66 @@ export default function StemsScreen() {
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const handlePlay = (stemName: string) => {
-    setStems((prev) =>
-      prev.map((s) => ({
-        ...s,
-        isPlaying: s.name === stemName ? !s.isPlaying : false,
-      }))
-    );
+  const handlePlay = async (stemName: string) => {
+    try {
+      // If already playing this stem, stop it
+      if (currentlyPlaying === stemName) {
+        if (soundRef.current) {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+          soundRef.current = null;
+        }
+        setCurrentlyPlaying(null);
+        setStems((prev) =>
+          prev.map((s) => ({ ...s, isPlaying: false }))
+        );
+        return;
+      }
+
+      // Stop any currently playing audio
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      setIsLoadingAudio(true);
+
+      // Configure audio mode
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+
+      // Load and play audio from backend
+      const url = getStemUrl(jobId, stemName);
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: url },
+        { shouldPlay: true },
+        (status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setCurrentlyPlaying(null);
+            setStems((prev) =>
+              prev.map((s) => ({ ...s, isPlaying: false }))
+            );
+          }
+        }
+      );
+
+      soundRef.current = sound;
+      setCurrentlyPlaying(stemName);
+      setStems((prev) =>
+        prev.map((s) => ({
+          ...s,
+          isPlaying: s.name === stemName,
+        }))
+      );
+    } catch (error) {
+      Alert.alert('Playback Error', 'Could not play audio. Make sure the backend is running.');
+      console.error('Audio playback error:', error);
+    } finally {
+      setIsLoadingAudio(false);
+    }
   };
 
   const handleDownload = (stemName: string) => {

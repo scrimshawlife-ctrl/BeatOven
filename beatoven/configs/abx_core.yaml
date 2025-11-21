@@ -1,0 +1,63 @@
+# ABX-Core v1.2 Configuration
+# Structured, modular, entropy-minimizing framework
+
+version: "1.2"
+name: "BeatOven ABX-Core Configuration"
+
+# Core parameters
+core:
+  compression_factor: 0.8  # Entropy compression (0.0-1.0)
+  determinism: true
+  provenance_tracking: true
+  max_entropy: 0.95
+
+# Semantic field ranges
+fields:
+  resonance:
+    min: 0.0
+    max: 1.0
+    default: 0.5
+    description: "Harmonic richness and sustain"
+
+  density:
+    min: 0.0
+    max: 1.0
+    default: 0.5
+    description: "Event density and complexity"
+
+  drift:
+    min: 0.0
+    max: 1.0
+    default: 0.3
+    description: "Temporal variation and evolution"
+
+  tension:
+    min: 0.0
+    max: 1.0
+    default: 0.5
+    description: "Harmonic/rhythmic tension level"
+
+  contrast:
+    min: 0.0
+    max: 1.0
+    default: 0.5
+    description: "Dynamic range and variation"
+
+# Noise reduction settings
+noise_reduction:
+  enabled: true
+  threshold: 0.1
+  smooth_factor: 0.3
+
+# Module weights for translation
+translation_weights:
+  intent: 0.4
+  mood: 0.25
+  rune: 0.2
+  style: 0.15
+
+# Rune vector configuration
+rune_vector:
+  dimensions: 64
+  activation: "tanh"
+  normalization: true

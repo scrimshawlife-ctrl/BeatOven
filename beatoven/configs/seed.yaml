@@ -1,0 +1,39 @@
+# SEED Protocol Configuration
+# Provenance, determinism, reproducibility
+
+version: "1.0"
+name: "BeatOven SEED Protocol Configuration"
+
+# Determinism settings
+determinism:
+  enabled: true
+  global_seed: 0
+  per_module_seeds: true
+
+# Provenance tracking
+provenance:
+  enabled: true
+  hash_algorithm: "sha256"
+  chain_enabled: true
+  store_inputs: true
+  store_outputs: true
+
+# Reproducibility
+reproducibility:
+  strict_mode: true
+  float_precision: 6
+  numpy_seed_protocol: "default_rng"
+
+# Hash verification
+verification:
+  enabled: true
+  checksum_interval: 1024
+  validate_on_load: true
+
+# Ledger configuration
+ledger:
+  enabled: true
+  format: "json"
+  path: "./provenance_ledger.json"
+  max_entries: 10000
+  rotation: true

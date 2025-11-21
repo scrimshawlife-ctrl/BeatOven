@@ -1,0 +1,75 @@
+BeatOven
+Copyright 2024 Applied Alchemy Labs
+
+This product includes software developed at Applied Alchemy Labs.
+
+================================================================================
+
+OPEN-CORE LICENSING MODEL
+
+This repository is released under the Apache License 2.0 (see LICENSE file).
+You are free to use, modify, and distribute this software under those terms.
+
+================================================================================
+
+PROPRIETARY COMPONENTS (NOT INCLUDED IN THIS REPOSITORY)
+
+The following components are proprietary to Applied Alchemy Labs and are NOT
+included in this open-source release. They remain closed-source and require
+separate licensing:
+
+- ABX-Core advanced optimizers and internal algorithms
+- Symbolic Translator neural network weights and internals
+- Runic modulation advanced logic and trained models
+- PsyFi emotional integration deep learning components
+- NFT rarity detector core algorithms
+- Echotome cryptographic implementation and keys
+- Advanced GPU model architectures
+- High-end synthesis engine proprietary DSP
+- Visual signature renderer advanced graphics
+- Commercial expansion packs and preset libraries
+- Enterprise integration APIs
+- Cloud service infrastructure code
+
+For licensing inquiries regarding proprietary components, contact:
+licensing@appliedalchemy.io
+
+================================================================================
+
+THIRD-PARTY DEPENDENCIES
+
+This software uses the following open-source libraries:
+
+- NumPy (BSD License)
+- FastAPI (MIT License)
+- Pydantic (MIT License)
+- PyYAML (MIT License)
+- Uvicorn (BSD License)
+- PyTorch (BSD License) - optional
+
+================================================================================
+
+AAL ECOSYSTEM INTEROPERABILITY
+
+BeatOven is designed to interoperate with other Applied Alchemy Labs products:
+
+- PsyFi: Emotional intelligence integration
+- Phonomicon: NFT metadata and rarity scoring
+- Dream Engine (Somnus-1): Dream-state audio generation
+- Neon Genie: Visual generation hooks
+- Echotome: Audio steganography and provenance
+- Abraxas Engine: Advanced synthesis core
+
+These integrations are provided as hooks and interfaces. Full integration may
+require additional proprietary components.
+
+================================================================================
+
+TRADEMARKS
+
+BeatOven, ABX-Core, SEED Protocol, ERS Runtime, PsyFi, Phonomicon, Echotome,
+Neon Genie, Dream Engine, Somnus-1, Abraxas Engine, and Applied Alchemy Labs
+are trademarks of Applied Alchemy Labs. Use of these trademarks must comply
+with Applied Alchemy Labs trademark guidelines.
+
+================================================================================

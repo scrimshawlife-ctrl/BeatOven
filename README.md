@@ -6,14 +6,44 @@ A Eurorack-inspired generative music system built on ABX-Core v1.2 and enforced 
 
 ## Features
 
+### Core Engine
 - **Modular Architecture**: Eurorack-inspired module system with PatchBay routing
 - **Deterministic Generation**: Same inputs always produce identical outputs
 - **ABX-Core v1.2**: Structured, entropy-minimizing framework
 - **SEED Protocol**: Complete provenance tracking and reproducibility
 - **GPU Acceleration**: CUDA and Apple Silicon (MPS) support
 - **API-First**: FastAPI backend with comprehensive endpoints
-- **Mobile UI**: React Native (Expo, TypeScript) app for iOS and Android
 - **AAL Interoperability**: Clean hooks for PsyFi, Phonomicon, Echotome, and more
+
+### Signal Intake System (NEW)
+- **Multi-Source Ingestion**: RSS/Atom feeds, JSON APIs, HTML scraping, text files, PDFs, epub, calendar (ICS), tasks
+- **Universal Normalization**: All inputs converted to unified SignalDocument format
+- **30+ Source Categories**: World news, technology, AI/ML, sports (NBA, NFL, MLB, NHL), markets, culture, science, personal data
+- **Symbolic Interpretation**: Automatic mapping to ABX-Runes fields (resonance, density, tension, etc.)
+- **Background Polling**: Configurable ingestion intervals with caching
+- **Provenance Tracking**: SHA-256 hashing for all ingested signals
+
+### Stem Extraction Service (NEW)
+- **ML-Based Separation**: Extract drums, bass, vocals, and 9+ other stem types from uploaded audio
+- **Multi-Format Support**: WAV, FLAC, AIFF, ALAC, MP3, AAC, M4A, OGG, Opus
+- **High-Resolution Audio**: 44.1kHz–192kHz sample rates, 16–32 bit depth
+- **Emotional Analysis**: Automatic computation of resonance, density, tension, emotional index for each stem
+- **No Reinterpretation**: Pure extraction service preserving original audio
+- **Model-Agnostic Inference**: Supports PyTorch, JAX, ONNX backends
+
+### Ringtone & Notification Generation (NEW)
+- **Short-Form Audio**: Generate 1-30 second ringtones and notifications
+- **Three Modes**: Notification (1-5s), Short Ringtone (10-15s), Standard Ringtone (20-30s)
+- **Configurable Output**: Melodic/percussive toggles, intensity control, seamless looping
+- **Mobile-Optimized**: Export to M4R, MP3, WAV for iOS and Android
+- **Deterministic**: Same parameters always produce identical output
+
+### Mobile UI
+- **React Native (Expo, TypeScript)** app for iOS and Android
+- **Dark/Light Themes**: Full theme switching with persistent preferences
+- **Connection Monitoring**: Auto-polling backend health indicator
+- **Preset Management**: Save and load module configurations
+- **Animated Waveforms**: Visual playback with animated playheads
 
 ## Quick Start
 
@@ -120,6 +150,116 @@ print(f"Generated {len(stems)} stems")
 print(f"Provenance: {fields.provenance_hash}")
 ```
 
+### Signal Intake Usage
+
+```python
+from beatoven.signals import FeedIngester, SourceCategory, SignalNormalizer
+from beatoven.signals.feeds import get_predefined_groups
+
+# Initialize ingester
+ingester = FeedIngester()
+
+# Ingest from predefined groups
+groups = get_predefined_groups()
+tech_group = next(g for g in groups if g.name == "Technology News")
+
+for source in tech_group.sources:
+    signals = ingester.ingest_rss_feed(source.url, tech_group.category)
+    for signal in signals:
+        print(f"{signal.title}")
+        print(f"  Resonance: {signal.resonance:.2f}")
+        print(f"  Density: {signal.density:.2f}")
+        print(f"  Tension: {signal.tension:.2f}")
+        print(f"  Provenance: {signal.provenance_hash}")
+
+# Ingest from custom text
+text_signal = SignalNormalizer.normalize_text(
+    text="Breaking: AI model achieves breakthrough in music generation",
+    category=SourceCategory.AI_ML
+)
+print(f"Text signal emotional index: {text_signal.emotional_index:.2f}")
+```
+
+### Stem Extraction Usage
+
+```python
+from beatoven.audio import StemExtractor, StemType, AudioIO
+
+# Initialize extractor
+extractor = StemExtractor(model_name="demucs", device="cuda")
+extractor.load_model()
+
+# Extract stems from uploaded track
+stems = extractor.extract_stems(
+    "uploaded_track.mp3",
+    stem_types=[
+        StemType.DRUMS,
+        StemType.BASS,
+        StemType.VOCALS,
+        StemType.OTHER
+    ]
+)
+
+for stem in stems:
+    print(f"\n{stem.name}:")
+    print(f"  Duration: {stem.duration:.2f}s")
+    print(f"  Sample Rate: {stem.sample_rate}Hz")
+    print(f"  Resonance: {stem.resonance:.3f}")
+    print(f"  Density: {stem.density:.3f}")
+    print(f"  Tension: {stem.tension:.3f}")
+    print(f"  Emotional Index: {stem.emotional_index:.3f}")
+
+    # Save stem to FLAC
+    AudioIO.save_audio(
+        f"{stem.name}.flac",
+        stem.audio_data,
+        sample_rate=stem.sample_rate,
+        bit_depth=24
+    )
+```
+
+### Ringtone Generation Usage
+
+```python
+from beatoven.core.ringtone import RingtoneGenerator, RingtoneType
+from beatoven.audio import AudioIO, AudioFormat
+
+# Initialize generator
+generator = RingtoneGenerator(seed=42)
+
+# Generate notification sound
+notification = generator.generate_notification(
+    duration_seconds=2.0,
+    melodic=True,
+    intensity=0.7
+)
+
+# Save as M4R for iOS
+AudioIO.save_audio(
+    "notification.m4r",
+    notification,
+    sample_rate=44100,
+    format=AudioFormat.M4A
+)
+
+# Generate standard ringtone
+ringtone = generator.generate_ringtone(
+    duration_seconds=25.0,
+    melodic=True,
+    percussive=True,
+    intensity=0.8,
+    loop=True
+)
+
+# Save as MP3 for Android
+AudioIO.save_audio(
+    "ringtone.mp3",
+    ringtone,
+    sample_rate=48000,
+    format=AudioFormat.MP3
+)
+```
+
 ## Architecture
 
 ```
@@ -153,7 +293,9 @@ The React Native app provides the primary user interface:
 | **Module** | Configure rhythm, harmony, timbre, motion parameters |
 | **Stems** | Waveform previews, playback, download |
 | **Symbolic** | Live ABX-Runes field visualization |
-| **Settings** | Backend URL, device mode, theme |
+| **Signals** | Multi-source signal intake, feed management, recent signals |
+| **Ringtone** | Generate notifications and ringtones (1-30s), export to mobile |
+| **Settings** | Backend URL, device mode, theme switching |
 
 ### Design Language
 
@@ -230,6 +372,13 @@ print(f"Execution order: {flow['execution_order']}")
 | `/psyfi/modulate` | POST | Emotional modulation |
 | `/patchbay/flow` | GET | Signal flow inspection |
 | `/runic/generate` | POST | Runic signature generation |
+| `/signals/ingest` | POST | Ingest signals from URL or text |
+| `/signals/groups` | GET | Get predefined source groups |
+| `/signals/categories` | GET | List available source categories |
+| `/stems/extract` | POST | Extract stems from uploaded audio |
+| `/stems/formats` | GET | Get supported audio formats |
+| `/ringtone/generate` | POST | Generate ringtone or notification |
+| `/ringtone/types` | GET | List ringtone types |
 | `/config` | GET | System configuration |
 
 ## ABX-Runes Fields
@@ -290,6 +439,8 @@ pytest --cov=beatoven beatoven/tests/
 - [Provenance](beatoven/docs/provenance.md)
 - [GPU Support](beatoven/docs/gpu.md)
 - [Mobile Integration](beatoven/docs/mobile.md)
+- [Signal Intake System](beatoven/docs/signals.md) - Multi-source signal ingestion and normalization
+- [Stem Extraction](beatoven/docs/stems.md) - ML-based audio separation with emotional analysis
 
 ## License
 

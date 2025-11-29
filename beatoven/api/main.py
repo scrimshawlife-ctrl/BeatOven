@@ -25,6 +25,10 @@ from beatoven.core.psyfi import PsyFiIntegration, EmotionalVector
 from beatoven.core.echotome import EchotomeHooks
 from beatoven.core.patchbay import PatchBay, create_default_patch
 from beatoven.core.runic_export import RunicVisualExporter
+from beatoven.core.ringtone import RingtoneGenerator, RingtoneType
+from beatoven.signals import SignalDocument, SourceCategory, SignalNormalizer, SourceType
+from beatoven.signals.feeds import FeedIngester, get_predefined_groups
+from beatoven.audio import StemExtractor, AudioIO, StemType as AudioStemType
 
 
 def create_app() -> FastAPI:
@@ -58,6 +62,9 @@ def create_app() -> FastAPI:
     app.state.echotome = EchotomeHooks()
     app.state.patchbay = PatchBay()
     app.state.runic_exporter = RunicVisualExporter()
+    app.state.ringtone_generator = RingtoneGenerator()
+    app.state.feed_ingester = FeedIngester()
+    app.state.stem_extractor = StemExtractor()
 
     # Load default patch
     app.state.patchbay.load_patch(create_default_patch())
@@ -424,6 +431,175 @@ async def get_config():
             },
             "timbre": {"seed": app.state.timbre_engine.seed},
             "motion": {"seed": app.state.motion_engine.seed}
+        }
+    }
+
+
+# ========== SIGNALS INTAKE ROUTES ==========
+
+class SignalIngestRequest(BaseModel):
+    """Request to ingest signals from source"""
+    source_url: Optional[str] = None
+    source_text: Optional[str] = None
+    source_category: str = Field(default="CUSTOM")
+    title: Optional[str] = "Untitled"
+
+
+@app.post("/signals/ingest")
+async def ingest_signal(request: SignalIngestRequest):
+    """Ingest signal from URL or text and normalize to SignalDocument"""
+    try:
+        category = SourceCategory[request.source_category]
+
+        if request.source_url:
+            # Ingest from feed URL
+            docs = app.state.feed_ingester.ingest_rss_feed(request.source_url, category)
+            return {"documents": [doc.to_dict() for doc in docs]}
+
+        elif request.source_text:
+            # Normalize text directly
+            doc = SignalNormalizer.normalize_text(
+                request.source_text,
+                SourceType.TEXT_FILE,
+                category,
+                request.title
+            )
+            return {"documents": [doc.to_dict()]}
+
+        else:
+            raise HTTPException(status_code=400, detail="Must provide source_url or source_text")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/signals/groups")
+async def get_signal_groups():
+    """Get predefined signal source groups"""
+    groups = get_predefined_groups()
+    return {"groups": [g.to_dict() for g in groups]}
+
+
+@app.get("/signals/categories")
+async def get_signal_categories():
+    """List all available signal categories"""
+    return {
+        "categories": [c.value for c in SourceCategory]
+    }
+
+
+# ========== STEM EXTRACTION ROUTES ==========
+
+class StemExtractionRequest(BaseModel):
+    """Request for stem extraction from uploaded audio"""
+    file_path: str = Field(..., description="Path to uploaded audio file")
+    stem_types: Optional[List[str]] = Field(default=None, description="Specific stems to extract")
+
+
+@app.post("/stems/extract")
+async def extract_stems(request: StemExtractionRequest):
+    """
+    Extract stems from uploaded audio file.
+    Returns stems with emotional/symbolic metadata.
+    """
+    try:
+        # Parse stem types
+        if request.stem_types:
+            stem_types = [AudioStemType[st.upper()] for st in request.stem_types]
+        else:
+            stem_types = None
+
+        # Extract stems
+        stems = app.state.stem_extractor.extract_stems(
+            request.file_path,
+            stem_types
+        )
+
+        return {
+            "stems": [stem.to_dict() for stem in stems],
+            "count": len(stems)
+        }
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/stems/formats")
+async def get_supported_formats():
+    """List supported audio formats for stem extraction"""
+    from beatoven.audio import AudioFormat
+    return {
+        "input_formats": [f.value for f in AudioFormat],
+        "output_formats": ["wav", "flac", "mp3", "m4a"],
+        "sample_rates": [44100, 48000, 88200, 96000, 176400, 192000],
+        "bit_depths": [16, 24, 32]
+    }
+
+
+# ========== RINGTONE GENERATION ROUTES ==========
+
+class RingtoneRequest(BaseModel):
+    """Request for ringtone/notification generation"""
+    duration_seconds: float = Field(default=25.0, ge=1, le=30)
+    ringtone_type: str = Field(default="standard_ringtone")
+    melodic: bool = Field(default=True)
+    percussive: bool = Field(default=True)
+    intensity: float = Field(default=0.7, ge=0, le=1)
+    loop_seamless: bool = Field(default=True)
+
+
+@app.post("/ringtone/generate")
+async def generate_ringtone(request: RingtoneRequest):
+    """
+    Generate ringtone or notification sound.
+    Returns audio data and metadata.
+    """
+    try:
+        ringtone_type = RingtoneType[request.ringtone_type.upper()]
+
+        if ringtone_type == RingtoneType.NOTIFICATION:
+            audio = app.state.ringtone_generator.generate_notification(
+                duration_seconds=request.duration_seconds,
+                melodic=request.melodic,
+                intensity=request.intensity
+            )
+        else:
+            audio = app.state.ringtone_generator.generate_ringtone(
+                duration_seconds=request.duration_seconds,
+                melodic=request.melodic,
+                percussive=request.percussive,
+                intensity=request.intensity,
+                loop_seamless=request.loop_seamless
+            )
+
+        # Generate provenance hash
+        hash_input = f"ringtone:{request.dict()}"
+        provenance = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
+
+        return {
+            "duration": len(audio) / 44100,
+            "sample_rate": 44100,
+            "samples": int(len(audio)),
+            "ringtone_type": ringtone_type.value,
+            "provenance_hash": provenance,
+            "download_ready": True
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/ringtone/types")
+async def get_ringtone_types():
+    """List available ringtone types"""
+    return {
+        "types": [rt.value for rt in RingtoneType],
+        "duration_limits": {
+            "notification": {"min": 1, "max": 5},
+            "short_ringtone": {"min": 10, "max": 15},
+            "standard_ringtone": {"min": 20, "max": 30}
         }
     }
 

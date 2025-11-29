@@ -14,6 +14,8 @@ import ModuleScreen from '../screens/ModuleScreen';
 import StemsScreen from '../screens/StemsScreen';
 import SymbolicPanelScreen from '../screens/SymbolicPanelScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import SignalsScreen from '../screens/SignalsScreen';
+import RingtoneScreen from '../screens/RingtoneScreen';
 import ConnectionStatus from '../components/ConnectionStatus';
 import { colors } from '../theme';
 
@@ -21,6 +23,8 @@ export type RootStackParamList = {
   Main: undefined;
   Module: { moduleType: 'rhythm' | 'harmony' | 'timbre' | 'motion' };
   Stems: { jobId: string };
+  Signals: undefined;
+  Ringtone: undefined;
 };
 
 export type TabParamList = {
@@ -133,6 +137,16 @@ export default function Navigation() {
           name="Stems"
           component={StemsScreen}
           options={{ title: 'Stems' }}
+        />
+        <Stack.Screen
+          name="Signals"
+          component={SignalsScreen}
+          options={{ title: 'Signals' }}
+        />
+        <Stack.Screen
+          name="Ringtone"
+          component={RingtoneScreen}
+          options={{ title: 'Ringtone' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

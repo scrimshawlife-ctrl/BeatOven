@@ -428,8 +428,10 @@ class HarmonicEngine:
         velocities = [e.velocity for e in events]
         mean_vel = np.mean(velocities)
 
+        compression_scale = max(0.0, min(1.0, 1.0 - self.compression_factor))
+
         for event in events:
-            event.velocity = mean_vel + self.compression_factor * (event.velocity - mean_vel)
+            event.velocity = mean_vel + compression_scale * (event.velocity - mean_vel)
             event.velocity = max(0.3, min(1.0, event.velocity))
 
         return events

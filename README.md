@@ -73,6 +73,42 @@ pip install -e ".[all]"
 
 The API will be available at `http://localhost:8000`. Documentation at `/docs`.
 
+## Deployment
+
+BeatOven now ships with ABX-Core-aligned containerization that can deploy to Render or Azure from the same Docker image. All secrets and configuration are provided through environment variables to keep the system deterministic and portable.
+
+### Common Requirements
+- **Environment variables** (set locally via `.env` and on platforms via dashboard/Secrets):
+  - `PORT` or `BEATOVEN_PORT`: Port the API listens on (platforms typically provide `PORT`).
+  - `BEATOVEN_HOST`: Bind host (default `0.0.0.0` for containers).
+  - `BEATOVEN_WORKERS`: Uvicorn worker count for production.
+  - `BEATOVEN_ENV`: Environment label (e.g., `production`, `staging`).
+  - `LOG_LEVEL`: Uvicorn/BeatOven log verbosity.
+- **Secrets**: Store any API keys, database URLs, or storage credentials in the Render dashboard or GitHub Secrets (never in the repo).
+- **Container image**: Built from the root `Dockerfile`, exposing port `8000` and using `uvicorn beatoven.api.main:app` as the entrypoint.
+
+### Deploying to Render
+1. Connect the GitHub repository in Render and choose **Web Service**.
+2. Select **Docker** for the environment and point to the included `render.yaml` (uses the root `Dockerfile`).
+3. Configure environment variables (`PORT`, `BEATOVEN_ENV`, `BEATOVEN_WORKERS`, and any integration secrets) in the Render dashboard.
+4. Deploy; the platform-provided `PORT` is honored automatically. Logs stream through Render; hook additional observability later if desired.
+
+### Deploying to Azure
+1. Provision an Azure Container Registry and a Web App for Containers within your resource group.
+2. Add GitHub Secrets for `AZURE_CREDENTIALS`, `AZURE_RESOURCE_GROUP`, `AZURE_WEBAPP_NAME`, `REGISTRY_LOGIN_SERVER`, `REGISTRY_USERNAME`, and `REGISTRY_PASSWORD`.
+3. Enable the `.github/workflows/deploy-azure.yml` workflow (push to `main` or run manually). The workflow runs tests, builds the Docker image, pushes it to the registry, and points the Web App to the new tag.
+4. Monitor container logs via Azure App Service and attach Azure Monitor/Application Insights when ready.
+
+### Local Development vs Production
+- **Local**: Use `./scripts/run_local.sh` or `uvicorn beatoven.api.main:app --reload` with environment variables loaded from a `.env` file. Hot reload is enabled by default.
+- **Production (Render/Azure)**: Containers run without reload, binding to `0.0.0.0` and the platform-provided port. All secrets are injected by the hosting platform; no mock data or baked-in defaults are committed.
+
+### Files Added for Deployment
+- `Dockerfile`: Single source of truth for the BeatOven container image.
+- `render.yaml`: Render web service definition using the Docker image.
+- `.github/workflows/deploy-azure.yml`: CI/CD pipeline to Azure Web App for Containers.
+- `.azure/README.md`: Notes on expected Azure resources and secrets.
+
 ### Run the Mobile App
 
 ```bash

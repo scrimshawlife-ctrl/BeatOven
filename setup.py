@@ -47,6 +47,15 @@ setup(
             "pyserial>=3.5",
             "cbor2>=5.4.0",
         ],
+        "media": [
+            "opencv-python>=4.8.0",
+        ],
+        "media-full": [
+            "opencv-python>=4.8.0",
+            "transformers>=4.30.0",
+            "torch>=2.0.0",
+            "timm>=0.9.0",
+        ],
         "all": [
             "torch>=2.0.0",
             "scipy>=1.10.0",
@@ -55,6 +64,9 @@ setup(
             "httpx>=0.24.0",
             "pyserial>=3.5",
             "cbor2>=5.4.0",
+            "opencv-python>=4.8.0",
+            "transformers>=4.30.0",
+            "timm>=0.9.0",
         ],
     },
     entry_points={

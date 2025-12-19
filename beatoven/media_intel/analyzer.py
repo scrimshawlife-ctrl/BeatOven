@@ -1,13 +1,20 @@
 from __future__ import annotations
 import os
-import cv2
 import numpy as np
 from typing import Optional
 
 from .schema import MediaFrame
-from .physical import analyze_image_physical, analyze_video_motion
 from .affect import affect_from_features
 from .temporal import summarize_emotion_trajectory, infer_era_from_heuristics
+
+# Optional opencv dependency
+try:
+    import cv2
+    from .physical import analyze_image_physical, analyze_video_motion
+    _CV2_AVAILABLE = True
+except ImportError:
+    _CV2_AVAILABLE = False
+    cv2 = None  # type: ignore
 
 # Optional semantic engine
 try:
@@ -18,6 +25,12 @@ except ImportError:
     SemanticEngine = None  # type: ignore
 
 def analyze_image(path: str, media_id: str, semantic_engine: Optional["SemanticEngine"] = None) -> MediaFrame:
+    if not _CV2_AVAILABLE:
+        raise ImportError(
+            "opencv-python is required for media analysis. "
+            "Install with: pip install beatoven[media]"
+        )
+
     bgr = cv2.imread(path, cv2.IMREAD_COLOR)
     if bgr is None:
         raise ValueError(f"Could not read image: {path}")
@@ -53,6 +66,12 @@ def analyze_image(path: str, media_id: str, semantic_engine: Optional["SemanticE
     )
 
 def analyze_video(path: str, media_id: str, sample_fps: float = 2.0, max_seconds: float = 60.0, semantic_engine: Optional["SemanticEngine"] = None) -> MediaFrame:
+    if not _CV2_AVAILABLE:
+        raise ImportError(
+            "opencv-python is required for media analysis. "
+            "Install with: pip install beatoven[media]"
+        )
+
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         raise ValueError(f"Could not open video: {path}")

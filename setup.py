@@ -43,12 +43,18 @@ setup(
             "scipy>=1.10.0",
             "soundfile>=0.12.0",
         ],
+        "hardware": [
+            "pyserial>=3.5",
+            "cbor2>=5.4.0",
+        ],
         "all": [
             "torch>=2.0.0",
             "scipy>=1.10.0",
             "soundfile>=0.12.0",
             "pytest>=7.0.0",
             "httpx>=0.24.0",
+            "pyserial>=3.5",
+            "cbor2>=5.4.0",
         ],
     },
     entry_points={

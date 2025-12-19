@@ -54,10 +54,14 @@ setup(
             "opencv-python>=4.8.0",
             "transformers>=4.30.0",
             "torch>=2.0.0",
+            "torchvision>=0.15.0",
             "timm>=0.9.0",
+            "pillow>=10.0.0",
+            "librosa>=0.10.0",
         ],
         "all": [
             "torch>=2.0.0",
+            "torchvision>=0.15.0",
             "scipy>=1.10.0",
             "soundfile>=0.12.0",
             "pytest>=7.0.0",
@@ -67,6 +71,8 @@ setup(
             "opencv-python>=4.8.0",
             "transformers>=4.30.0",
             "timm>=0.9.0",
+            "pillow>=10.0.0",
+            "librosa>=0.10.0",
         ],
     },
     entry_points={

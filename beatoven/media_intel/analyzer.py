@@ -9,16 +9,35 @@ from .physical import analyze_image_physical, analyze_video_motion
 from .affect import affect_from_features
 from .temporal import summarize_emotion_trajectory, infer_era_from_heuristics
 
-def analyze_image(path: str, media_id: str) -> MediaFrame:
+# Optional semantic engine
+try:
+    from .semantic_engine import SemanticEngine
+    _SEMANTIC_AVAILABLE = True
+except ImportError:
+    _SEMANTIC_AVAILABLE = False
+    SemanticEngine = None  # type: ignore
+
+def analyze_image(path: str, media_id: str, semantic_engine: Optional["SemanticEngine"] = None) -> MediaFrame:
     bgr = cv2.imread(path, cv2.IMREAD_COLOR)
     if bgr is None:
         raise ValueError(f"Could not read image: {path}")
 
     physical = analyze_image_physical(bgr)
-    semantic = {}  # plug in CLIP/scene models later, keep contract stable
+
+    # Use semantic engine if provided
+    if semantic_engine is not None and _SEMANTIC_AVAILABLE:
+        semantic = semantic_engine.analyze(kind="image", path=path, context={"hint": "music-control"})
+    else:
+        semantic = {}
 
     affect, conf = affect_from_features(physical, semantic)
-    era_dist, era_conf = infer_era_from_heuristics(physical, semantic)
+
+    # Merge CLIP era if available
+    if "clip" in semantic and "era_dist" in semantic["clip"]:
+        era_dist = semantic["clip"]["era_dist"]
+        era_conf = float(max(era_dist.values())) if era_dist else 0.5
+    else:
+        era_dist, era_conf = infer_era_from_heuristics(physical, semantic)
 
     return MediaFrame(
         media_id=media_id,
@@ -33,7 +52,7 @@ def analyze_image(path: str, media_id: str) -> MediaFrame:
         model_versions={"physical": "v1", "affect": "v1", "era": "v1"},
     )
 
-def analyze_video(path: str, media_id: str, sample_fps: float = 2.0, max_seconds: float = 60.0) -> MediaFrame:
+def analyze_video(path: str, media_id: str, sample_fps: float = 2.0, max_seconds: float = 60.0, semantic_engine: Optional["SemanticEngine"] = None) -> MediaFrame:
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         raise ValueError(f"Could not open video: {path}")
@@ -83,10 +102,21 @@ def analyze_video(path: str, media_id: str, sample_fps: float = 2.0, max_seconds
             physical_agg = analyze_image_physical(frame_mid)
     physical_agg.update(motion)
 
-    semantic = {}
+    # Use semantic engine if provided
+    if semantic_engine is not None and _SEMANTIC_AVAILABLE:
+        semantic = semantic_engine.analyze(kind="video", path=path, context={"hint": "music-control"})
+    else:
+        semantic = {}
+
     affect, conf = affect_from_features(physical_agg, semantic)
     traj = summarize_emotion_trajectory(arousal_series, valence_series)
-    era_dist, era_conf = infer_era_from_heuristics(physical_agg, semantic)
+
+    # Merge CLIP era if available
+    if "clip" in semantic and "era_dist" in semantic["clip"]:
+        era_dist = semantic["clip"]["era_dist"]
+        era_conf = float(max(era_dist.values())) if era_dist else 0.5
+    else:
+        era_dist, era_conf = infer_era_from_heuristics(physical_agg, semantic)
 
     return MediaFrame(
         media_id=media_id,

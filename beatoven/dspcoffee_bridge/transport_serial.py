@@ -4,8 +4,15 @@ import struct
 import time
 from typing import Any, Dict, Optional
 
-import cbor2
-import serial
+# Optional hardware dependencies
+try:
+    import cbor2
+    import serial
+    _HARDWARE_AVAILABLE = True
+except ImportError:
+    _HARDWARE_AVAILABLE = False
+    cbor2 = None  # type: ignore
+    serial = None  # type: ignore
 
 class SerialOpsLane:
     """
@@ -22,6 +29,12 @@ class SerialOpsLane:
     """
 
     def __init__(self, port: str, baud: int = 115200, timeout_s: float = 0.25) -> None:
+        if not _HARDWARE_AVAILABLE:
+            raise ImportError(
+                "Hardware dependencies (pyserial, cbor2) are required for serial transport. "
+                "Install with: pip install beatoven[hardware]"
+            )
+
         self.ser = serial.Serial(port=port, baudrate=baud, timeout=timeout_s)
         self._nonce = 1
 

@@ -30,6 +30,13 @@ from beatoven.signals import SignalDocument, SourceCategory, SignalNormalizer, S
 from beatoven.signals.feeds import FeedIngester, get_predefined_groups
 from beatoven.audio import StemExtractor, AudioIO, StemType as AudioStemType
 
+# Drums module
+from beatoven.api.drums import router as drums_router
+
+# Capabilities and config schema
+from beatoven.api.capabilities import get_capabilities, CapabilitiesResponse
+from beatoven.api.config_schema import get_config_schema, ConfigSchemaResponse
+
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
@@ -68,6 +75,9 @@ def create_app() -> FastAPI:
 
     # Load default patch
     app.state.patchbay.load_patch(create_default_patch())
+
+    # Mount drums router
+    app.include_router(drums_router, prefix="/api", tags=["drums"])
 
     return app
 
@@ -602,6 +612,37 @@ async def get_ringtone_types():
             "standard_ringtone": {"min": 20, "max": 30}
         }
     }
+
+
+# ========== CAPABILITIES & CONFIG SCHEMA ROUTES ==========
+
+@app.get("/api/capabilities", response_model=CapabilitiesResponse)
+async def get_system_capabilities():
+    """
+    Get system-wide capabilities.
+
+    Returns ALL features with availability status:
+    - Available: ready to use
+    - Disabled: installed but disabled (with reason)
+    - Unavailable: missing dependencies (with install instructions)
+
+    UI uses this to show all options, graying out unavailable ones with reasons.
+    """
+    return get_capabilities()
+
+
+@app.get("/api/config/schema", response_model=ConfigSchemaResponse)
+async def get_configuration_schema():
+    """
+    Get complete configuration schema.
+
+    Returns JSON schema for all configuration options across all modules.
+    UI uses this to dynamically generate controls with proper types, ranges,
+    and tooltips.
+
+    Schema-driven UI ensures all options are discoverable and self-documenting.
+    """
+    return get_config_schema()
 
 
 if __name__ == "__main__":

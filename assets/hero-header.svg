@@ -1,0 +1,71 @@
+<svg width="1200" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vintageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f4e4c1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e8d4a8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4b896;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b4513;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#a0522d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b4513;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#vintageGradient)"/>
+
+  <!-- Decorative vinyl record circles -->
+  <circle cx="150" cy="200" r="80" fill="#2c1810" opacity="0.15"/>
+  <circle cx="150" cy="200" r="60" fill="none" stroke="#2c1810" stroke-width="2" opacity="0.2"/>
+  <circle cx="150" cy="200" r="40" fill="none" stroke="#2c1810" stroke-width="1" opacity="0.2"/>
+  <circle cx="150" cy="200" r="20" fill="#2c1810" opacity="0.15"/>
+
+  <circle cx="1050" cy="200" r="80" fill="#2c1810" opacity="0.15"/>
+  <circle cx="1050" cy="200" r="60" fill="none" stroke="#2c1810" stroke-width="2" opacity="0.2"/>
+  <circle cx="1050" cy="200" r="40" fill="none" stroke="#2c1810" stroke-width="1" opacity="0.2"/>
+  <circle cx="1050" cy="200" r="20" fill="#2c1810" opacity="0.15"/>
+
+  <!-- Decorative musical notes -->
+  <text x="200" y="80" font-family="Georgia, serif" font-size="40" fill="#8b4513" opacity="0.3">♪</text>
+  <text x="980" y="350" font-family="Georgia, serif" font-size="40" fill="#8b4513" opacity="0.3">♫</text>
+  <text x="250" y="360" font-family="Georgia, serif" font-size="35" fill="#8b4513" opacity="0.3">♩</text>
+  <text x="920" y="90" font-family="Georgia, serif" font-size="35" fill="#8b4513" opacity="0.3">♬</text>
+
+  <!-- Main title -->
+  <text x="600" y="160" font-family="'Georgia', serif" font-size="72" font-weight="bold"
+        fill="url(#accentGradient)" text-anchor="middle" filter="url(#shadow)">
+    BeatOven
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="210" font-family="'Georgia', serif" font-size="28" font-style="italic"
+        fill="#5c3317" text-anchor="middle" opacity="0.9">
+    Cooking Up Generative Beats
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="260" font-family="'Courier New', monospace" font-size="18"
+        fill="#6b4423" text-anchor="middle" opacity="0.85">
+    Eurorack-Inspired • Deterministic • Hardware-Enabled
+  </text>
+
+  <!-- Decorative line -->
+  <line x1="350" y1="280" x2="850" y2="280" stroke="#8b4513" stroke-width="2" opacity="0.4"/>
+  <line x1="350" y1="285" x2="850" y2="285" stroke="#8b4513" stroke-width="1" opacity="0.3"/>
+
+  <!-- Bottom accent -->
+  <text x="600" y="320" font-family="'Georgia', serif" font-size="16"
+        fill="#7a5230" text-anchor="middle" opacity="0.7">
+    Part of the Applied Alchemy Labs Ecosystem
+  </text>
+
+  <!-- Corner ornaments -->
+  <circle cx="50" cy="50" r="5" fill="#8b4513" opacity="0.4"/>
+  <circle cx="1150" cy="50" r="5" fill="#8b4513" opacity="0.4"/>
+  <circle cx="50" cy="350" r="5" fill="#8b4513" opacity="0.4"/>
+  <circle cx="1150" cy="350" r="5" fill="#8b4513" opacity="0.4"/>
+</svg>

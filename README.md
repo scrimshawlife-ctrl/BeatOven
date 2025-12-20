@@ -16,6 +16,12 @@
 
 <div align="center">
 
+![BeatOven Hero](assets/hero-header.svg)
+
+</div>
+
+<div align="center">
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-green.svg)](https://fastapi.tiangolo.com/)

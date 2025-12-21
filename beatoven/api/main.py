@@ -26,6 +26,13 @@ from beatoven.core.echotome import EchotomeHooks
 from beatoven.core.patchbay import PatchBay, create_default_patch
 from beatoven.core.runic_export import RunicVisualExporter
 from beatoven.core.ringtone import RingtoneGenerator, RingtoneType
+from beatoven.core.doctrine import (
+    IntentToken,
+    RitualPhase,
+    IntentCompiler,
+    derive_seed_string,
+    derive_seed_int,
+)
 from beatoven.signals import SignalDocument, SourceCategory, SignalNormalizer, SourceType
 from beatoven.signals.feeds import FeedIngester, get_predefined_groups
 from beatoven.audio import StemExtractor, AudioIO, StemType as AudioStemType
@@ -65,6 +72,7 @@ def create_app() -> FastAPI:
     app.state.ringtone_generator = RingtoneGenerator()
     app.state.feed_ingester = FeedIngester()
     app.state.stem_extractor = StemExtractor()
+    app.state.intent_compiler = IntentCompiler()
 
     # Load default patch
     app.state.patchbay.load_patch(create_default_patch())
@@ -154,9 +162,24 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
     and generates rhythm, harmony, timbre, and motion.
     """
     try:
+        # Compile intent to parameters (PR1 compat mode)
+        intent = IntentToken(
+            text_intent=request.text_intent,
+            mood_tags=request.mood_tags or [],
+            seed=request.seed,
+        )
+        seed_string = request.seed or derive_seed_string(request.text_intent)
+        compiled_seed = derive_seed_int(seed_string)
+        bundle = app.state.intent_compiler.compile(
+            intent=intent,
+            phase=RitualPhase.PREP,
+            seed=compiled_seed,
+            memory=request.model_dump(),
+        )
+
         # Process input
-        mood_tags = [MoodTag(name=t) for t in (request.mood_tags or [])]
-        seed = ABXRunesSeed(request.seed or f"beatoven_{hash(request.text_intent)}")
+        mood_tags = [MoodTag(name=t) for t in (bundle.intent.mood_tags or [])]
+        seed = ABXRunesSeed(bundle.seed_string)
 
         symbolic_vector = app.state.input_module.process(
             text_intent=request.text_intent,
@@ -174,15 +197,15 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
         )
 
         # Apply request parameters to fields
-        resonance = request.resonance * abx_fields.resonance
-        density = request.density * abx_fields.density
-        tension = request.tension * abx_fields.tension
-        drift = request.drift * abx_fields.drift
-        contrast = request.contrast * abx_fields.contrast
+        resonance = bundle.resonance * abx_fields.resonance
+        density = bundle.density * abx_fields.density
+        tension = bundle.tension * abx_fields.tension
+        drift = bundle.drift * abx_fields.drift
+        contrast = bundle.contrast * abx_fields.contrast
 
         # Generate rhythm
         try:
-            scale = Scale[request.scale.upper()]
+            scale = Scale[bundle.scale.upper()]
         except KeyError:
             scale = Scale.MINOR
 
@@ -190,8 +213,8 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
             density=density,
             tension=tension,
             drift=drift,
-            tempo=request.tempo,
-            length_bars=int(request.duration / 4)
+            tempo=bundle.tempo,
+            length_bars=int(bundle.duration / 4)
         )
 
         # Generate harmony
@@ -199,9 +222,9 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
             resonance=resonance,
             tension=tension,
             contrast=contrast,
-            key_root=request.key_root,
+            key_root=bundle.key_root,
             scale=scale,
-            length_bars=int(request.duration / 4)
+            length_bars=int(bundle.duration / 4)
         )
 
         # Generate motion
@@ -209,7 +232,7 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
             drift=drift,
             tension=tension,
             resonance=resonance,
-            duration=request.duration,
+            duration=bundle.duration,
             rune_vector=symbolic_vector.rune_vector
         )
 
@@ -217,13 +240,13 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
         stems = app.state.stem_generator.generate_stems(
             rhythm_events=[e.to_dict() for e in rhythm_pattern.events],
             harmonic_events=[e.to_dict() for e in harmonic_prog.events],
-            duration=request.duration,
+            duration=bundle.duration,
             stem_types=[StemType.DRUMS, StemType.BASS, StemType.PADS, StemType.FULL_MIX]
         )
 
         # Compute job ID
         job_id = hashlib.sha256(
-            f"{request.text_intent}:{request.seed}:{symbolic_vector.provenance_hash}".encode()
+            f"{bundle.intent.text_intent}:{bundle.seed_string}:{symbolic_vector.provenance_hash}".encode()
         ).hexdigest()[:16]
 
         return GenerateResponse(

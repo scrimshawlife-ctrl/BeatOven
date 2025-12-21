@@ -1,0 +1,6 @@
+{
+  "rhythm_events": [{"time": 0.0, "velocity": 0.8}],
+  "harmonic_events": [{"time": 0.0, "notes": [60, 64, 67], "velocity": 0.8}],
+  "duration": 4.0,
+  "stem_types": ["DRUMS", "BASS"]
+}

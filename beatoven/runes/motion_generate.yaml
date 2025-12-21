@@ -1,0 +1,29 @@
+id: engine.motion.generate
+version: 1.0.0
+name: Motion Generator
+description: Deterministic motion curve generator.
+inputs_schema: beatoven/schema/motion_input.json
+outputs_schema: beatoven/schema/motion_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 40
+  target_mem_mb: 32
+  notes: Produces modulation curves for motion engine.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/motion_input.json
+      expected_ref: beatoven/runes/test_vectors/motion_expected.json
+      seed: 4242
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [motion, modulation]
+  consumes: [drift, tension, resonance]

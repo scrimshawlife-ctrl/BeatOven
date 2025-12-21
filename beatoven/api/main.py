@@ -29,6 +29,7 @@ from beatoven.core.ringtone import RingtoneGenerator, RingtoneType
 from beatoven.signals import SignalDocument, SourceCategory, SignalNormalizer, SourceType
 from beatoven.signals.feeds import FeedIngester, get_predefined_groups
 from beatoven.audio import StemExtractor, AudioIO, StemType as AudioStemType
+from beatoven.runtime.orchestrator import Orchestrator
 
 
 def create_app() -> FastAPI:
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.state.ringtone_generator = RingtoneGenerator()
     app.state.feed_ingester = FeedIngester()
     app.state.stem_extractor = StemExtractor()
+    app.state.orchestrator = Orchestrator()
 
     # Load default patch
     app.state.patchbay.load_patch(create_default_patch())
@@ -156,7 +158,8 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
     try:
         # Process input
         mood_tags = [MoodTag(name=t) for t in (request.mood_tags or [])]
-        seed = ABXRunesSeed(request.seed or f"beatoven_{hash(request.text_intent)}")
+        seed_source = request.seed or hashlib.sha256(request.text_intent.encode()).hexdigest()
+        seed = ABXRunesSeed(f"beatoven_{seed_source}")
 
         symbolic_vector = app.state.input_module.process(
             text_intent=request.text_intent,
@@ -185,33 +188,57 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
             scale = Scale[request.scale.upper()]
         except KeyError:
             scale = Scale.MINOR
-
-        rhythm_pattern, rhythm_desc = app.state.rhythm_engine.generate(
-            density=density,
-            tension=tension,
-            drift=drift,
-            tempo=request.tempo,
-            length_bars=int(request.duration / 4)
+        rhythm_payload = {
+            "density": density,
+            "tension": tension,
+            "drift": drift,
+            "tempo": request.tempo,
+            "length_bars": int(request.duration / 4),
+        }
+        rhythm_result = app.state.orchestrator.run_rune(
+            "engine.rhythm.generate",
+            rhythm_payload,
+            seed.numeric_seed,
         )
+        rhythm_pattern, rhythm_desc = app.state.rhythm_engine.generate(**rhythm_payload)
 
         # Generate harmony
+        harmony_payload = {
+            "resonance": resonance,
+            "tension": tension,
+            "contrast": contrast,
+            "key_root": request.key_root,
+            "scale": scale.name,
+            "length_bars": int(request.duration / 4),
+        }
+        harmony_result = app.state.orchestrator.run_rune(
+            "engine.harmony.generate",
+            harmony_payload,
+            seed.numeric_seed,
+        )
         harmonic_prog, harmonic_desc = app.state.harmonic_engine.generate(
             resonance=resonance,
             tension=tension,
             contrast=contrast,
             key_root=request.key_root,
             scale=scale,
-            length_bars=int(request.duration / 4)
+            length_bars=int(request.duration / 4),
         )
 
         # Generate motion
-        motion_curves, motion_desc = app.state.motion_engine.generate(
-            drift=drift,
-            tension=tension,
-            resonance=resonance,
-            duration=request.duration,
-            rune_vector=symbolic_vector.rune_vector
+        motion_payload = {
+            "drift": drift,
+            "tension": tension,
+            "resonance": resonance,
+            "duration": request.duration,
+            "rune_vector": symbolic_vector.rune_vector,
+        }
+        motion_result = app.state.orchestrator.run_rune(
+            "engine.motion.generate",
+            motion_payload,
+            seed.numeric_seed,
         )
+        motion_curves, motion_desc = app.state.motion_engine.generate(**motion_payload)
 
         # Generate stems
         stems = app.state.stem_generator.generate_stems(
@@ -232,7 +259,14 @@ async def generate(request: GenerateRequest, background_tasks: BackgroundTasks):
             rhythm_descriptor=rhythm_desc.to_dict(),
             harmonic_descriptor=harmonic_desc.to_dict(),
             motion_descriptor=motion_desc.to_dict(),
-            stems_generated=[s.value for s in stems.keys()]
+            stems_generated=[s.value for s in stems.keys()],
+            rarity_metadata={
+                "rune_manifests": {
+                    "rhythm": rhythm_result.manifest["manifest_hash"],
+                    "harmony": harmony_result.manifest["manifest_hash"],
+                    "motion": motion_result.manifest["manifest_hash"],
+                }
+            },
         )
 
     except Exception as e:
@@ -432,6 +466,78 @@ async def get_config():
             "timbre": {"seed": app.state.timbre_engine.seed},
             "motion": {"seed": app.state.motion_engine.seed}
         }
+    }
+
+
+@app.get("/api/capabilities")
+async def get_capabilities():
+    """Expose backend capability availability for UI rendering."""
+    return {
+        "features": [
+            {"id": "gpu", "available": app.state.stem_extractor.device != "cpu", "reason": "CPU fallback" if app.state.stem_extractor.device == "cpu" else None},
+            {"id": "rhythm.pattern.polymetric", "available": True, "reason": None},
+            {"id": "rhythm.pattern.random", "available": True, "reason": None},
+            {"id": "harmony.scale.locrian", "available": True, "reason": None},
+            {"id": "timbre.texture.metallic", "available": True, "reason": None},
+        ]
+    }
+
+
+@app.get("/api/config/schema")
+async def get_config_schema():
+    """Expose configuration schema for dynamic UI controls."""
+    return {
+        "version": "1.0.0",
+        "modules": {
+            "rhythm": {
+                "tempo": {"min": 60, "max": 200, "default": 120},
+                "swing": {"min": 0, "max": 1, "default": 0.0},
+                "density": {"min": 0, "max": 1, "default": 0.5},
+                "pattern": {
+                    "options": [
+                        {"value": "euclidean", "label": "euclidean"},
+                        {"value": "polymetric", "label": "polymetric"},
+                        {"value": "linear", "label": "linear"},
+                        {"value": "random", "label": "random"},
+                    ]
+                },
+            },
+            "harmony": {
+                "scale": {
+                    "options": [
+                        {"value": "major", "label": "major"},
+                        {"value": "minor", "label": "minor"},
+                        {"value": "dorian", "label": "dorian"},
+                        {"value": "phrygian", "label": "phrygian"},
+                        {"value": "lydian", "label": "lydian"},
+                        {"value": "mixolydian", "label": "mixolydian"},
+                        {"value": "locrian", "label": "locrian"},
+                    ]
+                },
+                "tension": {"min": 0, "max": 1, "default": 0.5},
+                "complexity": {"min": 0, "max": 1, "default": 0.5},
+            },
+            "timbre": {
+                "texture": {
+                    "options": [
+                        {"value": "smooth", "label": "smooth"},
+                        {"value": "gritty", "label": "gritty"},
+                        {"value": "metallic", "label": "metallic"},
+                        {"value": "organic", "label": "organic"},
+                        {"value": "digital", "label": "digital"},
+                    ]
+                },
+                "brightness": {"min": 0, "max": 1, "default": 0.5},
+                "warmth": {"min": 0, "max": 1, "default": 0.5},
+                "reverb": {"min": 0, "max": 1, "default": 0.3},
+            },
+            "motion": {
+                "lfoRate": {"min": 0, "max": 1, "default": 0.5},
+                "lfoDepth": {"min": 0, "max": 1, "default": 0.3},
+                "attack": {"min": 0, "max": 1, "default": 0.1},
+                "decay": {"min": 0, "max": 1, "default": 0.5},
+            },
+        },
     }
 
 

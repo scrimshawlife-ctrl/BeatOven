@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MotionInput",
+  "type": "object",
+  "required": ["drift", "tension", "resonance", "duration", "rune_vector"],
+  "properties": {
+    "drift": {"type": "number", "minimum": 0, "maximum": 1},
+    "tension": {"type": "number", "minimum": 0, "maximum": 1},
+    "resonance": {"type": "number", "minimum": 0, "maximum": 1},
+    "duration": {"type": "number", "minimum": 0.1},
+    "rune_vector": {"type": "array"}
+  }
+}

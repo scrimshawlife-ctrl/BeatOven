@@ -1,0 +1,29 @@
+id: engine.harmony.generate
+version: 1.0.0
+name: Harmony Generator
+description: Deterministic harmonic progression generator.
+inputs_schema: beatoven/schema/harmony_input.json
+outputs_schema: beatoven/schema/harmony_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 50
+  target_mem_mb: 64
+  notes: CPU-bound harmonic progression synthesis.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/harmony_input.json
+      expected_ref: beatoven/runes/test_vectors/harmony_expected.json
+      seed: 4242
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [harmony, progression]
+  consumes: [resonance, tension, contrast]

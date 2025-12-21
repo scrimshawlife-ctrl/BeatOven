@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StemsInput",
+  "type": "object",
+  "required": ["rhythm_events", "harmonic_events", "duration"],
+  "properties": {
+    "rhythm_events": {"type": "array"},
+    "harmonic_events": {"type": "array"},
+    "duration": {"type": "number"},
+    "stem_types": {"type": "array"}
+  }
+}

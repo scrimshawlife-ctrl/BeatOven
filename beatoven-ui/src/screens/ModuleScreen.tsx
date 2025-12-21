@@ -2,7 +2,7 @@
  * Module Detail Screen - Configure module parameters
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,8 @@ import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import SliderControl from '../components/SliderControl';
-import ToggleControl from '../components/ToggleControl';
 import type { RootStackParamList } from '../navigation';
+import useBackend, { CapabilityResponse, ConfigSchemaResponse } from '../hooks/useBackend';
 
 type ModuleScreenRouteProp = RouteProp<RootStackParamList, 'Module'>;
 
@@ -73,18 +73,20 @@ const DEFAULT_CONFIG: ModuleConfig = {
   },
 };
 
-const SCALES = ['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian'];
-const TEXTURES = ['smooth', 'gritty', 'metallic', 'organic', 'digital'];
-const PATTERNS = ['euclidean', 'polymetric', 'linear', 'random'];
+const DEFAULT_SCALES = ['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian'];
+const DEFAULT_TEXTURES = ['smooth', 'gritty', 'metallic', 'organic', 'digital'];
+const DEFAULT_PATTERNS = ['euclidean', 'polymetric', 'linear', 'random'];
 
 export default function ModuleScreen() {
   const route = useRoute<ModuleScreenRouteProp>();
   const { moduleType } = route.params;
+  const { getCapabilities, getConfigSchema } = useBackend();
 
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [seed, setSeed] = useState('abc123');
+  const [schema, setSchema] = useState<ConfigSchemaResponse | null>(null);
+  const [capabilities, setCapabilities] = useState<CapabilityResponse | null>(null);
 
-  const moduleConfig = config[moduleType];
   const moduleColor = {
     rhythm: colors.rhythm,
     harmony: colors.harmony,
@@ -103,6 +105,67 @@ export default function ModuleScreen() {
         [key]: value,
       },
     }));
+  };
+
+  useEffect(() => {
+    const loadSchema = async () => {
+      try {
+        const [schemaResponse, capabilityResponse] = await Promise.all([
+          getConfigSchema(),
+          getCapabilities(),
+        ]);
+        setSchema(schemaResponse);
+        setCapabilities(capabilityResponse);
+        const moduleSchema = schemaResponse.modules;
+        setConfig((prev) => ({
+          rhythm: {
+            tempo: moduleSchema.rhythm?.tempo?.default ?? prev.rhythm.tempo,
+            swing: moduleSchema.rhythm?.swing?.default ?? prev.rhythm.swing,
+            density: moduleSchema.rhythm?.density?.default ?? prev.rhythm.density,
+            pattern: moduleSchema.rhythm?.pattern?.options?.[0]?.value ?? prev.rhythm.pattern,
+          },
+          harmony: {
+            scale: moduleSchema.harmony?.scale?.options?.[0]?.value ?? prev.harmony.scale,
+            mode: prev.harmony.mode,
+            tension: moduleSchema.harmony?.tension?.default ?? prev.harmony.tension,
+            complexity: moduleSchema.harmony?.complexity?.default ?? prev.harmony.complexity,
+          },
+          timbre: {
+            texture: moduleSchema.timbre?.texture?.options?.[0]?.value ?? prev.timbre.texture,
+            brightness: moduleSchema.timbre?.brightness?.default ?? prev.timbre.brightness,
+            warmth: moduleSchema.timbre?.warmth?.default ?? prev.timbre.warmth,
+            reverb: moduleSchema.timbre?.reverb?.default ?? prev.timbre.reverb,
+          },
+          motion: {
+            lfoRate: moduleSchema.motion?.lfoRate?.default ?? prev.motion.lfoRate,
+            lfoDepth: moduleSchema.motion?.lfoDepth?.default ?? prev.motion.lfoDepth,
+            attack: moduleSchema.motion?.attack?.default ?? prev.motion.attack,
+            decay: moduleSchema.motion?.decay?.default ?? prev.motion.decay,
+          },
+        }));
+      } catch (error) {
+        setSchema(null);
+        setCapabilities(null);
+      }
+    };
+
+    loadSchema();
+  }, [getCapabilities, getConfigSchema]);
+
+  const featureAvailability = useMemo(() => {
+    const featureMap = new Map<string, CapabilityResponse['features'][number]>();
+    capabilities?.features.forEach((feature) => featureMap.set(feature.id, feature));
+    return featureMap;
+  }, [capabilities]);
+
+  const getFeatureStatus = (featureId: string) => {
+    return featureAvailability.get(featureId) ?? { id: featureId, available: true };
+  };
+
+  const schemaOptions = {
+    patterns: schema?.modules.rhythm?.pattern?.options?.map((option) => option.value) ?? DEFAULT_PATTERNS,
+    scales: schema?.modules.harmony?.scale?.options?.map((option) => option.value) ?? DEFAULT_SCALES,
+    textures: schema?.modules.timbre?.texture?.options?.map((option) => option.value) ?? DEFAULT_TEXTURES,
   };
 
   const regenerateSeed = () => {
@@ -140,27 +203,35 @@ export default function ModuleScreen() {
       <View style={styles.optionGroup}>
         <Text style={styles.optionLabel}>Pattern</Text>
         <View style={styles.optionButtons}>
-          {PATTERNS.map((pattern) => (
-            <TouchableOpacity
-              key={pattern}
-              style={[
-                styles.optionButton,
-                config.rhythm.pattern === pattern && {
-                  backgroundColor: moduleColor,
-                },
-              ]}
-              onPress={() => updateConfig('pattern', pattern)}
-            >
-              <Text
+          {schemaOptions.patterns.map((pattern) => {
+            const feature = getFeatureStatus(`rhythm.pattern.${pattern}`);
+            return (
+              <TouchableOpacity
+                key={pattern}
                 style={[
-                  styles.optionText,
-                  config.rhythm.pattern === pattern && styles.optionTextActive,
+                  styles.optionButton,
+                  config.rhythm.pattern === pattern && {
+                    backgroundColor: moduleColor,
+                  },
+                  !feature.available && styles.optionButtonDisabled,
                 ]}
+                onPress={() => feature.available && updateConfig('pattern', pattern)}
               >
-                {pattern}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.optionText,
+                    config.rhythm.pattern === pattern && styles.optionTextActive,
+                    !feature.available && styles.optionTextDisabled,
+                  ]}
+                >
+                  {pattern}
+                </Text>
+                {!feature.available && feature.reason ? (
+                  <Text style={styles.optionReason}>{feature.reason}</Text>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     </>
@@ -172,27 +243,35 @@ export default function ModuleScreen() {
         <Text style={styles.optionLabel}>Scale</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.optionButtons}>
-            {SCALES.map((scale) => (
-              <TouchableOpacity
-                key={scale}
-                style={[
-                  styles.optionButton,
-                  config.harmony.scale === scale && {
-                    backgroundColor: moduleColor,
-                  },
-                ]}
-                onPress={() => updateConfig('scale', scale)}
-              >
-                <Text
+            {schemaOptions.scales.map((scale) => {
+              const feature = getFeatureStatus(`harmony.scale.${scale}`);
+              return (
+                <TouchableOpacity
+                  key={scale}
                   style={[
-                    styles.optionText,
-                    config.harmony.scale === scale && styles.optionTextActive,
+                    styles.optionButton,
+                    config.harmony.scale === scale && {
+                      backgroundColor: moduleColor,
+                    },
+                    !feature.available && styles.optionButtonDisabled,
                   ]}
+                  onPress={() => feature.available && updateConfig('scale', scale)}
                 >
-                  {scale}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.optionText,
+                      config.harmony.scale === scale && styles.optionTextActive,
+                      !feature.available && styles.optionTextDisabled,
+                    ]}
+                  >
+                    {scale}
+                  </Text>
+                  {!feature.available && feature.reason ? (
+                    <Text style={styles.optionReason}>{feature.reason}</Text>
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </ScrollView>
       </View>
@@ -218,27 +297,35 @@ export default function ModuleScreen() {
       <View style={styles.optionGroup}>
         <Text style={styles.optionLabel}>Texture</Text>
         <View style={styles.optionButtons}>
-          {TEXTURES.map((texture) => (
-            <TouchableOpacity
-              key={texture}
-              style={[
-                styles.optionButton,
-                config.timbre.texture === texture && {
-                  backgroundColor: moduleColor,
-                },
-              ]}
-              onPress={() => updateConfig('texture', texture)}
-            >
-              <Text
+          {schemaOptions.textures.map((texture) => {
+            const feature = getFeatureStatus(`timbre.texture.${texture}`);
+            return (
+              <TouchableOpacity
+                key={texture}
                 style={[
-                  styles.optionText,
-                  config.timbre.texture === texture && styles.optionTextActive,
+                  styles.optionButton,
+                  config.timbre.texture === texture && {
+                    backgroundColor: moduleColor,
+                  },
+                  !feature.available && styles.optionButtonDisabled,
                 ]}
+                onPress={() => feature.available && updateConfig('texture', texture)}
               >
-                {texture}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.optionText,
+                    config.timbre.texture === texture && styles.optionTextActive,
+                    !feature.available && styles.optionTextDisabled,
+                  ]}
+                >
+                  {texture}
+                </Text>
+                {!feature.available && feature.reason ? (
+                  <Text style={styles.optionReason}>{feature.reason}</Text>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
       <SliderControl
@@ -428,6 +515,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  optionButtonDisabled: {
+    opacity: 0.5,
+  },
   optionText: {
     ...typography.caption,
     color: colors.textSecondary,
@@ -436,6 +526,14 @@ const styles = StyleSheet.create({
   optionTextActive: {
     color: colors.background,
     fontWeight: '600',
+  },
+  optionTextDisabled: {
+    color: colors.textSecondary,
+  },
+  optionReason: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontSize: 10,
   },
   actions: {
     flexDirection: 'row',

@@ -1,0 +1,29 @@
+id: service.stems.generate
+version: 1.0.0
+name: Stem Generator
+description: Generate audio stems and metadata from rhythm and harmony events.
+inputs_schema: beatoven/schema/stems_input.json
+outputs_schema: beatoven/schema/stems_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 120
+  target_mem_mb: 128
+  notes: Uses stem generator without file I/O.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/stems_input.json
+      expected_ref: beatoven/runes/test_vectors/stems_expected.json
+      seed: 2024
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [stems, audio]
+  consumes: [rhythm, harmony]

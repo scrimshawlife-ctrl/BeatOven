@@ -318,6 +318,38 @@ AudioIO.save_audio(
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### ABX-Runes registry
+
+Validate rune manifests and list registered runes:
+
+```bash
+python -m beatoven.registry list
+python -m beatoven.registry validate
+```
+
+Run a rune directly through the orchestrator:
+
+```python
+from beatoven.runtime.orchestrator import Orchestrator
+
+orchestrator = Orchestrator()
+result = orchestrator.run_rune(
+    "engine.rhythm.generate",
+    {"density": 0.5, "tension": 0.4, "drift": 0.2, "tempo": 120, "length_bars": 4},
+    seed=4242,
+)
+print(result.output)
+print(result.manifest)
+```
+
+### Capabilities + schema-driven UI
+
+The backend exposes capability and configuration endpoints so the UI can always render
+every option and disable unavailable features with reason text:
+
+- `GET /api/capabilities`
+- `GET /api/config/schema`
+
 ## Mobile App (beatoven-ui)
 
 The React Native app provides the primary user interface:

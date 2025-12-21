@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HarmonyOutput",
+  "type": "object",
+  "required": ["progression", "description"],
+  "properties": {
+    "progression": {"type": "array"},
+    "description": {"type": "object"}
+  }
+}

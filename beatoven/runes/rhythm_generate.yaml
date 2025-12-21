@@ -1,0 +1,29 @@
+id: engine.rhythm.generate
+version: 1.0.0
+name: Rhythm Generator
+description: Deterministic rhythm pattern generation.
+inputs_schema: beatoven/schema/rhythm_input.json
+outputs_schema: beatoven/schema/rhythm_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 50
+  target_mem_mb: 64
+  notes: Pattern generation is CPU-bound and scales with bars.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/rhythm_input.json
+      expected_ref: beatoven/runes/test_vectors/rhythm_expected.json
+      seed: 4242
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [rhythm, pattern]
+  consumes: [intent, density, tension]

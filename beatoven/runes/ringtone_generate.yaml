@@ -1,0 +1,29 @@
+id: service.ringtone.generate
+version: 1.0.0
+name: Ringtone Generator
+description: Generate short-form ringtone audio buffers.
+inputs_schema: beatoven/schema/ringtone_input.json
+outputs_schema: beatoven/schema/ringtone_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 80
+  target_mem_mb: 64
+  notes: Short-form synthesis only.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/ringtone_input.json
+      expected_ref: beatoven/runes/test_vectors/ringtone_expected.json
+      seed: 9090
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [ringtone, audio]
+  consumes: [alert, duration]

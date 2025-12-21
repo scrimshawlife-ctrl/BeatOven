@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HarmonyInput",
+  "type": "object",
+  "required": ["resonance", "tension", "contrast", "key_root", "scale", "length_bars"],
+  "properties": {
+    "resonance": {"type": "number", "minimum": 0, "maximum": 1},
+    "tension": {"type": "number", "minimum": 0, "maximum": 1},
+    "contrast": {"type": "number", "minimum": 0, "maximum": 1},
+    "key_root": {"type": "integer", "minimum": 0, "maximum": 127},
+    "scale": {"type": "string"},
+    "length_bars": {"type": "integer", "minimum": 1}
+  }
+}

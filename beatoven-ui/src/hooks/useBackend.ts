@@ -76,6 +76,35 @@ export interface ModuleParams {
   };
 }
 
+export interface CapabilityFeature {
+  id: string;
+  available: boolean;
+  reason?: string | null;
+}
+
+export interface CapabilityResponse {
+  features: CapabilityFeature[];
+}
+
+export interface ConfigSchemaOption {
+  value: string;
+  label: string;
+}
+
+export interface ConfigSchemaModule {
+  [key: string]: {
+    min?: number;
+    max?: number;
+    default?: number;
+    options?: ConfigSchemaOption[];
+  };
+}
+
+export interface ConfigSchemaResponse {
+  version: string;
+  modules: Record<string, ConfigSchemaModule>;
+}
+
 export function useBackend() {
   const [backendUrl, setBackendUrlState] = useState(DEFAULT_BACKEND_URL);
   const [isLoading, setIsLoading] = useState(false);
@@ -194,6 +223,14 @@ export function useBackend() {
     return apiCall<Record<string, unknown>>('/config');
   }, [apiCall]);
 
+  const getCapabilities = useCallback(async () => {
+    return apiCall<CapabilityResponse>('/api/capabilities');
+  }, [apiCall]);
+
+  const getConfigSchema = useCallback(async () => {
+    return apiCall<ConfigSchemaResponse>('/api/config/schema');
+  }, [apiCall]);
+
   return {
     backendUrl,
     setBackendUrl,
@@ -210,6 +247,8 @@ export function useBackend() {
     getRunicSignature,
     getRecentGenerations,
     getConfig,
+    getCapabilities,
+    getConfigSchema,
   };
 }
 

@@ -1,0 +1,7 @@
+{
+  "drift": 0.2,
+  "tension": 0.5,
+  "resonance": 0.4,
+  "duration": 8.0,
+  "rune_vector": [0.1, 0.2, 0.3]
+}

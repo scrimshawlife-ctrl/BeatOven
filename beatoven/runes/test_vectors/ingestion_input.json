@@ -1,0 +1,6 @@
+{
+  "source_type": "TEXT_FILE",
+  "payload": "Signal test payload.",
+  "category": "CUSTOM",
+  "title": "Test Signal"
+}

@@ -1,0 +1,8 @@
+{
+  "ringtone_type": "ALERT",
+  "duration_seconds": 2.0,
+  "intensity": 0.6,
+  "melodic": 0.7,
+  "percussive": 0.4,
+  "loop_seamless": true
+}

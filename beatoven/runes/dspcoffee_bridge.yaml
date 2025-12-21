@@ -1,0 +1,29 @@
+id: service.dspcoffee.bridge
+version: 1.0.0
+name: DSP Coffee Bridge
+description: Bridge patchbay signals into DSP Coffee engine.
+inputs_schema: beatoven/schema/dspcoffee_input.json
+outputs_schema: beatoven/schema/dspcoffee_output.json
+capabilities:
+  filesystem: []
+  network: []
+  clock: none
+  randomness: seed_required
+determinism:
+  seed_required: true
+  stable_sorting: true
+  time_dependent: false
+performance_envelope:
+  target_latency_ms: 60
+  target_mem_mb: 64
+  notes: Pure bridging with deterministic patch routing.
+tests:
+  golden_vectors:
+    - input_ref: beatoven/runes/test_vectors/dspcoffee_input.json
+      expected_ref: beatoven/runes/test_vectors/dspcoffee_expected.json
+      seed: 123
+provenance:
+  manifest_fields: [code_hash, config_hash, input_hash, seed, timestamp_policy]
+routing:
+  provides: [dsp, bridge]
+  consumes: [patch, audio]
